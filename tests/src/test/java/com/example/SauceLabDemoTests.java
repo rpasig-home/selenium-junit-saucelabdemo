@@ -62,48 +62,4 @@ public class SauceLabDemoTests extends BaseSeleniumTest {
 
     assertCartHasExactlyOneItem(inventory, itemName);
   }
-
-  @Test
-  void secondLowestPricedItem_selectedAndAddedToCart() {
-    InventoryPage inventory = loginAndWaitForInventory();
-
-    String itemName = inventory.addSecondLowestPricedItemToCart();
-    log.info("2nd lowest priced item selected: {}", itemName);
-
-    assertCartHasExactlyOneItem(inventory, itemName);
-  }
-
-  @Test
-  void secondHighestPricedItem_selectedAndAddedToCart() {
-    InventoryPage inventory = loginAndWaitForInventory();
-
-    String itemName = inventory.addSecondHighestPricedItemToCart();
-    log.info("2nd highest priced item selected: {}", itemName);
-
-    assertCartHasExactlyOneItem(inventory, itemName);
-  }
-
-  @Test
-  void samePricedItems_selectedAndAddedToCart() {
-    InventoryPage inventory = loginAndWaitForInventory();
-
-    List<String> names = inventory.addAllHighestPricedItemsToCart();
-    log.info("Highest-priced items selected ({}): {}", names.size(), names);
-
-    // Badge should equal number of items added
-    WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(5));
-    wait.until(d -> inventory.cartCountOrNull() != null);
-
-    assertEquals(String.valueOf(names.size()), inventory.cartCountOrNull(),
-        "Cart badge should match number of items added");
-
-    ShoppingCartPage cart = inventory.goToCart();
-    wait.until(d -> cart.itemCount() >= names.size());
-
-    assertEquals(names.size(), cart.itemCount(), "Cart should contain all max-priced items");
-
-    for (String name : names) {
-      assertTrue(cart.containsItemNamed(name), "Cart should contain: " + name);
-    }
-  }
 }

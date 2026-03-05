@@ -19,3 +19,13 @@ make test
 
 ## View allure report post test run
 http://localhost:5050/allure-docker-service/latest-report
+
+## Run tests without Docker
+```bash
+cd tests
+
+## Headless mode (default – browser not visible)
+mvn test
+
+## Non-headless mode (see the browser)
+HEADLESS=false mvn test
