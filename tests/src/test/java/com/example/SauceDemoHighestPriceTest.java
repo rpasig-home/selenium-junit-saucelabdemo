@@ -33,4 +33,19 @@ public class SauceDemoHighestPriceTest extends BaseSeleniumTest {
 
     assertTrue(cart.containsItemNamed(itemName));
   }
+
+  @Test
+  void addLowestPricedItemToCart_withoutSorting() {
+    var inventory = loginAndWaitForInventory();
+
+    String itemName = inventory.addLowestPricedItemToCart();
+    log.info("Lowest priced item selected: {}", itemName);
+
+    assertEquals("1", inventory.cartCountOrNull());
+
+    var cart = inventory.goToCart();
+    new WebDriverWait(driver, Duration.ofSeconds(5)).until(d -> cart.itemCount() >= 1);
+
+    assertTrue(cart.containsItemNamed(itemName));
+  }
 }
