@@ -1,0 +1,33 @@
+services:
+  selenium:
+    image: selenium/standalone-chromium:latest
+    shm_size: 2gb
+    ports:
+      - "4444:4444"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:4444/status > /dev/null || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 60
+      start_period: 20s  
+  tests:
+    build: ./tests
+    depends_on:
+      selenium:
+        condition: service_healthy
+    environment:
+      - BASE_URL=https://www.saucedemo.com/
+      - SELENIUM_URL=http://selenium:4444
+    volumes:
+      - ./tests/target:/work/target
+    command: ["mvn", "-Dallure.results.directory=/work/target/allure-results", "test"]
+  report:
+    image: frankescobar/allure-docker-service:2.27.0
+    ports:
+      - "5050:5050"
+    environment:
+      CHECK_RESULTS_EVERY_SECONDS: "3"
+      KEEP_HISTORY: "1"
+    volumes:
+      - ./tests/target/allure-results:/app/allure-results
+      - ./tests/target/allure-report:/app/default-reports
