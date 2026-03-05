@@ -5,7 +5,10 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+
 
 public class InventoryPage {
 
@@ -27,38 +30,6 @@ public class InventoryPage {
     return !driver.findElements(inventoryItems).isEmpty();
   }
 
-  public String addHighestPricedItemToCart() {
-
-    List<WebElement> items = driver.findElements(inventoryItems);
-
-    BigDecimal maxPrice = null;
-    WebElement maxItem = null;
-
-    for (WebElement item : items) {
-
-      String priceText = item.findElement(itemPrice)
-          .getText()
-          .replace("$", "")
-          .trim();
-
-      BigDecimal price = new BigDecimal(priceText);
-
-      if (maxPrice == null || price.compareTo(maxPrice) > 0) {
-        maxPrice = price;
-        maxItem = item;
-      }
-    }
-
-    if (maxItem == null) {
-      throw new IllegalStateException("No max item found");
-    }
-
-    String name = maxItem.findElement(itemName).getText();
-    maxItem.findElement(addToCartButton).click();
-
-    return name;
-  }
-
   public String cartCountOrNull() {
     List<WebElement> badges = driver.findElements(cartBadge);
     return badges.isEmpty() ? null : badges.get(0).getText();
@@ -67,5 +38,72 @@ public class InventoryPage {
   public ShoppingCartPage goToCart() {
     driver.findElement(cartLink).click();
     return new ShoppingCartPage(driver);
+  }
+
+  // Internal model for inventory items
+
+  private static class Item {
+    final WebElement root;
+    final String name;
+    final BigDecimal price;
+
+    Item(WebElement root, String name, BigDecimal price) {
+      this.root = root;
+      this.name = name;
+      this.price = price;
+    }
+  }
+
+  private List<Item> readItems() {
+
+    List<WebElement> roots = driver.findElements(inventoryItems);
+
+    if (roots.isEmpty()) {
+      throw new IllegalStateException("No inventory items found");
+    }
+
+    List<Item> items = new ArrayList<>();
+
+    for (WebElement root : roots) {
+
+      String name = root.findElement(itemName).getText().trim();
+
+      String rawPrice = root.findElement(itemPrice)
+          .getText()
+          .replace("$", "")
+          .trim();
+
+      BigDecimal price = new BigDecimal(rawPrice);
+
+      items.add(new Item(root, name, price));
+    }
+
+    return items;
+  }
+
+  private void addToCart(Item item) {
+    item.root.findElement(addToCartButton).click();
+  }
+
+  // Price selection logic for inventory itemm
+
+  public String addHighestPricedItemToCart() {
+
+    Item max = readItems().stream()
+        .max(Comparator.comparing(i -> i.price))
+        .orElseThrow();
+
+    addToCart(max);
+    return max.name;
+  }
+
+  public String addLowestPricedItemToCart() {
+
+    Item min = readItems().stream()
+        .min(Comparator.comparing(i -> i.price))
+        .orElseThrow();
+
+    addToCart(min);
+    return min.name;
   }
 }
